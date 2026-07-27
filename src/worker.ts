@@ -12,7 +12,11 @@ import { embed, toVector, warmUp } from "./embed.js"
 
 const DOCLING_URL = (process.env.DOCLING_URL ?? "http://localhost:5001").replace(/\/$/, "")
 const POLL_MS = Number(process.env.WORKER_POLL_MS ?? 2000)
-const MAX_ATTEMPTS = Number(process.env.MAX_ATTEMPTS ?? 3)
+// Ten, not three: on a first deploy the converter is still pulling its models
+// while the first upload arrives, and a document must not be marked failed
+// because it was early.
+const MAX_ATTEMPTS = Number(process.env.MAX_ATTEMPTS ?? 10)
+const RETRY_DELAY_MS = Number(process.env.RETRY_DELAY_MS ?? 5000)
 
 interface Claimed {
   id: string
@@ -108,6 +112,9 @@ async function tick(): Promise<boolean> {
       message.slice(0, 2000),
     ])
     console.error(`failed ${document.filename} (attempt ${document.attempts}): ${message}`)
+    // Pause before taking the next document: whatever went wrong is usually
+    // still wrong a millisecond later, and a tight retry loop only fills logs.
+    if (nextStatus === "pending") await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS))
   }
   return true
 }

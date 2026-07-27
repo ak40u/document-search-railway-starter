@@ -78,6 +78,21 @@ app.get("/documents", authorize, async (_req, res) => {
   res.json({ documents: rows })
 })
 
+app.post("/documents/:id/retry", authorize, async (req, res) => {
+  // A document that failed - because the converter was down, or the file was
+  // briefly unreadable - goes back in the queue with its attempt count reset.
+  const { rowCount } = await pool.query(
+    `update documents set status = 'pending', attempts = 0, error = null, updated_at = now()
+     where id = $1 and status = 'failed'`,
+    [req.params.id],
+  )
+  if (!rowCount) {
+    res.status(409).json({ error: "only a failed document can be retried" })
+    return
+  }
+  res.json({ id: req.params.id, status: "pending" })
+})
+
 app.post("/search", authorize, express.json(), async (req, res) => {
   const query = typeof req.body?.query === "string" ? req.body.query.trim() : ""
   const limit = Math.min(Math.max(Number(req.body?.limit ?? 5), 1), 50)
