@@ -22,7 +22,7 @@ Every one of those is a decision someone has to make. This template makes them, 
 
 ### Deployment Dependencies
 
-- [Docling](https://github.com/docling-project/docling-serve) `v1.28.0` — document conversion
+- [Docling](https://github.com/docling-project/docling-serve) `v1.36.0` — document conversion
 - Postgres with [pgvector](https://github.com/pgvector/pgvector) — documents, queue and vectors in one place
 - `all-MiniLM-L6-v2` embeddings, running locally on CPU
 - [Template source](https://github.com/ak40u/document-search-railway-starter)
